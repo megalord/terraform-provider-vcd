@@ -24,6 +24,11 @@
     "//": "This section contains the organization composition",
     "org": "myorg",
     "vdc": "myvdc",
+    "providerVdc": {
+      "id": "<uuid>",
+      "storageProfile": "<uuid>",
+      "networkPool": "<uuid>"
+    },
     "catalog": {
       "name": "mycatalog",
       "catalogItem": "photon-hw11"
