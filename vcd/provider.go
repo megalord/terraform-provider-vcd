@@ -83,6 +83,7 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
+			"vcd_disk":             resourceVcdDisk(),
 			"vcd_network":          resourceVcdNetwork(), // DEPRECATED: replaced by vcd_network_routed
 			"vcd_network_routed":   resourceVcdNetworkRouted(),
 			"vcd_network_direct":   resourceVcdNetworkDirect(),

@@ -51,6 +51,13 @@ func resourceVcdVAppVm() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"disks": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"memory": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -182,7 +189,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		task, err := vapp.AddVM(nets, vappTemplate, d.Get("name").(string), acceptEulas)
+		task, err := vapp.AddVM(nets, "", vappTemplate, d.Get("name").(string), acceptEulas)
 
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("error adding VM: %#v", err))
@@ -216,6 +223,25 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	})
 	if err != nil {
 		return fmt.Errorf("error changing network: %#v", err)
+	}
+
+	if disks, ok := d.GetOk("disks"); ok {
+		for _, disk := range disks.([]interface{}) {
+			task, err := vm.AttachDisk(&types.DiskAttachOrDetachParams{
+				Disk: &types.Reference{
+					HREF: disk.(string),
+				},
+			})
+			if err != nil {
+				d.SetId("")
+				return fmt.Errorf("error attaching disk: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				d.SetId("")
+				return fmt.Errorf("error waiting for disk attachment: %#v", err)
+			}
+		}
 	}
 
 	initScript, ok := d.GetOk("initscript")
